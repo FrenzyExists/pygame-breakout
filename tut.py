@@ -7,6 +7,7 @@ import sys
 
 import pygame
 from pygame.locals import QUIT
+from math import sqrt, ceil
 
 SIZE = (640, 480)
 pygame.init()
@@ -16,6 +17,7 @@ CLOCK = pygame.time.Clock()
 BG = pygame.Color("#264653")
 BALL_BG = pygame.Color("#e9c46a")
 PALLET_BG = pygame.Color("#2a9d8f")
+BRICK_BG = pygame.Color("#f4a261")
 
 
 class Pallet(pygame.sprite.Sprite):
@@ -57,6 +59,56 @@ class Pallet(pygame.sprite.Sprite):
         self.rect.x += self.vel
 
         self.rect.move(self.rect.x, self.rect.y)
+
+
+class Brick(pygame.sprite.Sprite):
+    def __init__(self, color, x: int, y: int, width, height):
+        pygame.sprite.Sprite.__init__(self)
+        self.width = width
+        self.height = height
+        self.color = color
+        self.image = pygame.Surface((self.width, self.height))
+        self.image.fill(BALL_BG)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+
+        pygame.draw.rect(self.image, BALL_BG,
+                         self.rect)
+
+
+class Wall(pygame.sprite.Group):
+    def __init__(self, container_width: int, container_height: int, amount_of_bricks: int, gap=10):
+        pygame.sprite.Group.__init__(self)
+        self.gap = gap
+        rows = ceil(sqrt(amount_of_bricks+self.gap))
+        cols = ceil(amount_of_bricks / rows)
+        brick_width: int = ceil(
+            (container_width + self.gap) / cols - self.gap-self.gap//2)
+        brick_height = ceil((container_height + self.gap) / rows - self.gap)
+        pos_x, pos_y = self.gap, self.gap
+
+        for i in range(rows):
+            for j in range(cols):
+                brick = Brick(BRICK_BG, pos_x + brick_width // 2,
+                              pos_y + brick_height // 2, brick_width,
+                              brick_height)
+                self.add(brick)
+                pos_x += brick_width + self.gap
+            pos_y += brick_height + self.gap
+            pos_x = self.gap
+
+        # for i in range(amount_of_bricks):
+        #     if (pos_x + (brick_width)//2) > container_width:
+        #         pos_y += brick_height + self.gap
+        #         pos_x = self.gap
+
+        #     brick = Brick(BRICK_BG, pos_x + brick_width // 2,
+        #                   pos_y + brick_height // 2, brick_width, brick_height)
+
+        #     # brick = Brick(BRICK_BG, pos_x, pos_y, brick_width, brick_height)
+        #     self.add(brick)
+        #     pos_x += brick_width + self.gap
 
 
 class Ball(pygame.sprite.Sprite):
@@ -120,7 +172,9 @@ pygame.display.set_caption('Bouncing ball')
 
 myBall = Ball(BALL_BG)
 myPallet = Pallet(PALLET_BG)
-
+# 10, SIZE[0], 300
+myWall = Wall(container_height=SIZE[1]//3,
+              amount_of_bricks=20, container_width=SIZE[0])
 # Adjust event repetition
 pygame.key.set_repeat(30)
 
@@ -138,6 +192,8 @@ while True:
 
     DISPLAY_SURF.fill(BG)
     myBall.draw(DISPLAY_SURF)
+    myWall.draw(DISPLAY_SURF)
+
     DISPLAY_SURF.blit(myPallet.image, myPallet.rect)
 
     # Update Display
