@@ -19,6 +19,8 @@ BALL_BG = pygame.Color("#e9c46a")
 PALLET_BG = pygame.Color("#2a9d8f")
 BRICK_BG = pygame.Color("#f4a261")
 
+SCORE = 0
+
 
 class Pallet(pygame.sprite.Sprite):
     """
@@ -38,11 +40,11 @@ class Pallet(pygame.sprite.Sprite):
         self.image.fill(BG)
         self.max_speed = 10
         self.acceleration = 0.5
-        self.friction = 0.95
+        self.friction = 0.85
         self.vel = 0
 
         pygame.draw.rect(self.image, color,
-                         self.image.get_rect(), border_radius=4)
+                         self.image.get_rect(), border_radius=0)
 
     def update(self, keys) -> None:
         if keys[pygame.K_LEFT]:
@@ -68,17 +70,18 @@ class Brick(pygame.sprite.Sprite):
         self.height = height
         self.color = color
         self.image = pygame.Surface((self.width, self.height))
-        self.image.fill(BALL_BG)
+        self.image.fill(self.color)
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.centery = y
 
-        pygame.draw.rect(self.image, BALL_BG,
+        pygame.draw.rect(self.image, (self.color),
                          self.rect)
 
 
 class Wall(pygame.sprite.Group):
-    def __init__(self, container_width: int, container_height: int, amount_of_bricks: int, gap=10):
+    def __init__(self, container_width: int, container_height: int,
+                 amount_of_bricks: int, gap: int = 10, top_gap: int = None):
         pygame.sprite.Group.__init__(self)
         self.gap = gap
         rows = ceil(sqrt(amount_of_bricks+self.gap))
@@ -86,7 +89,7 @@ class Wall(pygame.sprite.Group):
         brick_width: int = ceil(
             (container_width + self.gap) / cols - self.gap-self.gap//2)
         brick_height = ceil((container_height + self.gap) / rows - self.gap)
-        pos_x, pos_y = self.gap, self.gap
+        pos_x, pos_y = self.gap, self.gap+top_gap
 
         for i in range(rows):
             for j in range(cols):
@@ -98,17 +101,14 @@ class Wall(pygame.sprite.Group):
             pos_y += brick_height + self.gap
             pos_x = self.gap
 
-        # for i in range(amount_of_bricks):
-        #     if (pos_x + (brick_width)//2) > container_width:
-        #         pos_y += brick_height + self.gap
-        #         pos_x = self.gap
 
-        #     brick = Brick(BRICK_BG, pos_x + brick_width // 2,
-        #                   pos_y + brick_height // 2, brick_width, brick_height)
-
-        #     # brick = Brick(BRICK_BG, pos_x, pos_y, brick_width, brick_height)
-        #     self.add(brick)
-        #     pos_x += brick_width + self.gap
+def collide_ball_pallet(ball: pygame.Surface, pallet: pygame.Rect):
+    # Check if the ball and the pallet are overlapping
+    if not pygame.sprite.collide_rect(ball, pallet):
+        return False
+    if ball.vy > 0 and ball.rect.left <= (pallet.rect.right):
+        return True
+    return False
 
 
 class Ball(pygame.sprite.Sprite):
@@ -126,15 +126,16 @@ class Ball(pygame.sprite.Sprite):
         vy: vertical velocity
     """
 
-    def __init__(self, color: pygame.Color) -> None:
+    def __init__(self, color: pygame.Color, x=SIZE[0] // 2,
+                 y=SIZE[1] // 2, radius=12, speed=5) -> None:
         pygame.sprite.Sprite.__init__(self)
         self.color = color
-        self.radius = 12
-        self.x = SIZE[0] // 2
-        self.y = SIZE[1] // 2
-
-        self.vx = 5
-        self.vy = 5
+        self.radius = radius
+        self.x = x
+        self.y = y
+        self.rect = None
+        self.vx = speed
+        self.vy = speed
 
     def draw(self, screen):
         """
@@ -144,11 +145,14 @@ class Ball(pygame.sprite.Sprite):
             screen: A pygame.Surface object that represents the display
             surface.
         """
-        pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
+        # self.rect = pygame.draw.rect(screen, self.color, (self.x, self.y, self.x, self.y))
+        # self.rect = pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
+        self.rect = pygame.draw.circle(
+            screen, self.color, (self.x, self.y), self.radius)
 
     def update(self):
         """
-        Updates the position and velocity of the ball according to the 
+        Updates the position and velocity of the ball according to the
         boundaries of the screen.
 
         - If the ball hits the left or right edge of the screen, it reverses
@@ -174,7 +178,10 @@ myBall = Ball(BALL_BG)
 myPallet = Pallet(PALLET_BG)
 # 10, SIZE[0], 300
 myWall = Wall(container_height=SIZE[1]//3,
-              amount_of_bricks=20, container_width=SIZE[0])
+              amount_of_bricks=20, container_width=SIZE[0], gap=6, top_gap=30)
+
+font = pygame.font.SysFont(None, 32)
+
 # Adjust event repetition
 pygame.key.set_repeat(30)
 
@@ -186,14 +193,31 @@ while True:
             pygame.quit()
             sys.exit()
 
-    # Update Ball, Pallet
+    # Update Ball and Pallet
     myBall.update()
     myPallet.update(pygame.key.get_pressed())
 
     DISPLAY_SURF.fill(BG)
+
     myBall.draw(DISPLAY_SURF)
     myWall.draw(DISPLAY_SURF)
 
+    if collide_ball_pallet(myBall, myPallet):
+        myBall.vy = -myBall.vy
+
+    collision_list = pygame.sprite.spritecollide(myBall, myWall, True)
+    if collision_list:
+        cx = myBall.rect.centerx
+        if cx < collision_list[0].rect.left or cx > collision_list[0].rect.right:
+            myBall.vx = -myBall.vx
+        else:
+            myBall.vy = -myBall.vy
+        SCORE += 10
+
+    if len(myWall.sprites()) == 0:
+        print("YOU WON!")
+        exit(0)
+    DISPLAY_SURF.blit(font.render(f"SCORE: {SCORE}", 0, PALLET_BG), (20, 10))
     DISPLAY_SURF.blit(myPallet.image, myPallet.rect)
 
     # Update Display
