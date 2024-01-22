@@ -1,3 +1,8 @@
+"""
+A simple game I made with pygame while following
+a tutorial on udemy, with some changes here and there
+"""
+
 import sys
 
 import pygame
@@ -14,6 +19,12 @@ PALLET_BG = pygame.Color("#2a9d8f")
 
 
 class Pallet(pygame.sprite.Sprite):
+    """
+    # Pallet
+    Creates a pallet object
+    Takes a color as param. Pretty self-explanatory
+    """
+
     def __init__(self, color) -> None:
         self.width: int = 70
         self.height: int = 12
@@ -49,9 +60,23 @@ class Pallet(pygame.sprite.Sprite):
 
 
 class Ball(pygame.sprite.Sprite):
+    """
+    # Ball
+    A ball that bounces everywhere that's it
 
-    def __init__(self) -> None:
+    Params:
+        color: pygame.Color object, specifies color of the ball
+
+    Attributes:
+        x: int, x-coordinate of the center of the ball
+        y: int, y-coordinate of the center of the ball
+        vx: horizontal velocity
+        vy: vertical velocity
+    """
+
+    def __init__(self, color: pygame.Color) -> None:
         pygame.sprite.Sprite.__init__(self)
+        self.color = color
         self.radius = 12
         self.x = SIZE[0] // 2
         self.y = SIZE[1] // 2
@@ -60,9 +85,25 @@ class Ball(pygame.sprite.Sprite):
         self.vy = 5
 
     def draw(self, screen):
-        pygame.draw.circle(screen, BALL_BG, (self.x, self.y), self.radius)
+        """
+        Draws the ball on the given screen.
+
+        Args:
+            screen: A pygame.Surface object that represents the display
+            surface.
+        """
+        pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
 
     def update(self):
+        """
+        Updates the position and velocity of the ball according to the 
+        boundaries of the screen.
+
+        - If the ball hits the left or right edge of the screen, it reverses
+        its horizontal velocity.
+        - If the ball hits the top or bottom edge of the screen, it reverses
+        its vertical velocity.
+        """
         self.x += self.vx
         self.y += self.vy
         if (self.x + self.radius) > SIZE[0] or (self.x - self.radius) <= 0:
@@ -72,13 +113,16 @@ class Ball(pygame.sprite.Sprite):
 
 
 # Init Display
-DISPLAYSURF = pygame.display.set_mode(SIZE)
+DISPLAY_SURF = pygame.display.set_mode(SIZE)
 
 # Set Window name
 pygame.display.set_caption('Bouncing ball')
 
-myBall = Ball()
+myBall = Ball(BALL_BG)
 myPallet = Pallet(PALLET_BG)
+
+# Adjust event repetition
+pygame.key.set_repeat(30)
 
 # Event loop
 while True:
@@ -88,13 +132,13 @@ while True:
             pygame.quit()
             sys.exit()
 
-    # Update Ball
+    # Update Ball, Pallet
     myBall.update()
     myPallet.update(pygame.key.get_pressed())
 
-    DISPLAYSURF.fill(BG)
-    myBall.draw(DISPLAYSURF)
-    DISPLAYSURF.blit(myPallet.image, myPallet.rect)
+    DISPLAY_SURF.fill(BG)
+    myBall.draw(DISPLAY_SURF)
+    DISPLAY_SURF.blit(myPallet.image, myPallet.rect)
 
     # Update Display
     pygame.display.update()
