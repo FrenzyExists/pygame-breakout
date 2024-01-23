@@ -189,6 +189,33 @@ class Ball(pygame.sprite.Sprite):
             self.vy = -self.vy
 
 
+class Director:
+    def __init__(self) -> None:
+        pass
+
+    def action(self, initial_scene, fps=60):
+        pass
+
+
+class Scene:
+    def __init__(self) -> None:
+        self.next_scene = False
+        self.playing = True
+        pass
+
+    def event(self, e):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self, surface):
+        pass
+
+    def change_scene(self, new_scene):
+        pass
+
+
 def display_big_text(surface: pygame.Surface, text: str, quit=True, can_sleep=True, sleep_time=3) -> None:
     big_text = pygame.font.SysFont(None, 72)
     txt: pygame.Surface = big_text.render(text, True, BALL_BG)
@@ -241,16 +268,9 @@ while True:
 
     DISPLAY_SURF.fill(BG)
     if not start_game:
-        display_big_text(DISPLAY_SURF, "READY?", False, sleep_time=0.6)
-        DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "3", False, sleep_time=0.6)
-        DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "2", False, sleep_time=0.6)
-        DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "1", False, sleep_time=0.6)
-        DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "GO!!! GO!!! GO!!!",
-                         False, sleep_time=0.6)
+        for i in ["READY?", "3", "2", "1", "GO!!! GO!!! GO!!!"]:
+            display_big_text(DISPLAY_SURF, i, False, sleep_time=0.6)
+            DISPLAY_SURF.fill(BG)
         start_game = True
 
     # Update Ball and Pallet
