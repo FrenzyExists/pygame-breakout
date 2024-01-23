@@ -21,6 +21,8 @@ BRICK_BG = pygame.Color("#f4a261")
 FONT_FG = pygame.Color("#e76f51")
 
 SCORE = 0
+LIVES = 3
+DRAW: bool = True
 
 
 class Pallet(pygame.sprite.Sprite):
@@ -57,8 +59,10 @@ class Pallet(pygame.sprite.Sprite):
 
         # Ensure the Pallet stays within the window boundaries
         if self.rect.left < 0:
+            self.rect.left = 0  # fixes bug where pallet gets stuck
             self.vel = -self.vel * self.friction
-        elif self.rect.right >= SIZE[0]:
+        elif self.rect.right > SIZE[0]:
+            self.rect.right = SIZE[0]  # fixes bug where pallet gets stuck
             self.vel = -self.vel * self.friction
 
         if self.vel > self.max_speed:
@@ -185,15 +189,17 @@ class Ball(pygame.sprite.Sprite):
             self.vy = -self.vy
 
 
-def display_big_text(surface: pygame.Surface, text: str, quit=True) -> None:
+def display_big_text(surface: pygame.Surface, text: str, quit=True, can_sleep=True, sleep_time=3) -> None:
     big_text = pygame.font.SysFont(None, 72)
     txt: pygame.Surface = big_text.render(text, True, BALL_BG)
     txt_rect = txt.get_rect()
     txt_rect.center = [SIZE[0] // 2, SIZE[1] // 2]
     surface.blit(txt, txt_rect)
     pygame.display.update()
+    if can_sleep:
+        sleep(sleep_time)
     if quit:
-        sleep(3)
+
         sys.exit(0)
 
 
@@ -229,30 +235,35 @@ while True:
             pygame.quit()
             sys.exit()
 
+    if DRAW and pygame.key.get_pressed()[pygame.K_SPACE]:
+        print("BOI")
+        DRAW = False
+
     DISPLAY_SURF.fill(BG)
     if not start_game:
-        display_big_text(DISPLAY_SURF, "READY?", False)
-        sleep(1)
+        display_big_text(DISPLAY_SURF, "READY?", False, sleep_time=0.6)
         DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "3", False)
-        sleep(1)
+        display_big_text(DISPLAY_SURF, "3", False, sleep_time=0.6)
         DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "2", False)
-        sleep(1)
+        display_big_text(DISPLAY_SURF, "2", False, sleep_time=0.6)
         DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "1", False)
-        sleep(1)
+        display_big_text(DISPLAY_SURF, "1", False, sleep_time=0.6)
         DISPLAY_SURF.fill(BG)
-        display_big_text(DISPLAY_SURF, "GO!!!", False)
-        sleep(0.6)
+        display_big_text(DISPLAY_SURF, "GO!!! GO!!! GO!!!",
+                         False, sleep_time=0.6)
         start_game = True
 
     # Update Ball and Pallet
-    myBall.update()
-    myPallet.update(pygame.key.get_pressed())
 
     myBall.draw(DISPLAY_SURF)
     myWall.draw(DISPLAY_SURF)
+
+    if not DRAW:
+        myBall.update()
+    else:
+        myBall.x, myBall.y = myPallet.rect.centerx, myPallet.rect.top-myPallet.rect.height
+
+    myPallet.update(pygame.key.get_pressed())
 
     if collide_ball_pallet(myBall, myPallet):
         myBall.vy = -myBall.vy
@@ -267,13 +278,20 @@ while True:
         SCORE += 10
 
     DISPLAY_SURF.blit(font.render(f"SCORE: {SCORE}", 1, FONT_FG), (20, 10))
+    DISPLAY_SURF.blit(font.render(
+        f"LIVES: {LIVES}", 1, FONT_FG), (SIZE[0] - 100, 10))
     DISPLAY_SURF.blit(myPallet.image, myPallet.rect)
 
     if len(myWall.sprites()) == 0:
         display_big_text(DISPLAY_SURF, f"YOU WON!!!  {SCORE}")
 
-    # if myBall.rect.bottom >= SIZE[1]:
-    #     display_big_text(DISPLAY_SURF, "AWW... YOU LOST")
+    if LIVES == 0:
+        display_big_text(DISPLAY_SURF, "AWW... YOU LOST")
 
     # Update Display
     pygame.display.update()
+
+    # Update lives here so when we loose we see the 0
+    if myBall.rect.bottom >= SIZE[1]:
+        LIVES -= 1
+        DRAW = True
