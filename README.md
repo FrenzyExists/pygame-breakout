@@ -4,7 +4,7 @@ Simple game made with pygame, based on a [udemy tutorial](https://www.udemy.com/
 
 Also code quality is pretty bad ok i did this in like 2.5 days (counting midnight) because my dumbass decided to drink coffee at 11pm 🫠
 
-![./screenshots/gameplay.png]
+![alt text](./screenshots/gameplay.png "Gameplay, kinda")
 
 ### Things to do that I am too lazy or dumb to do:
 - [ ] Refactor Code by doing some kind of scene manager
