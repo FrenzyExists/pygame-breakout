@@ -23,6 +23,7 @@ FONT_FG = pygame.Color("#e76f51")
 SCORE = 0
 LIVES = 3
 DRAW: bool = True
+FPS: int = 60
 
 
 class Pallet(pygame.sprite.Sprite):
@@ -75,6 +76,13 @@ class Pallet(pygame.sprite.Sprite):
 
 
 class Brick(pygame.sprite.Sprite):
+    """
+    Brick sprite class.
+
+    In breakout its the squares you break. This would be a single
+    instace. There's probably a better way to do this    
+    """
+
     def __init__(self, color, x: int, y: int, width, height):
         pygame.sprite.Sprite.__init__(self)
         self.width = width
@@ -90,6 +98,10 @@ class Brick(pygame.sprite.Sprite):
 
 
 class Wall(pygame.sprite.Group):
+    """
+    Contains a group of Brick instances
+    """
+
     def __init__(
         self,
         container_width: int,
@@ -156,8 +168,9 @@ class Ball(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.rect = None
-        self.vx = speed
-        self.vy = speed
+        self.speed = speed
+        self.vx = self.speed
+        self.vy = self.speed
 
     def draw(self, screen):
         """
@@ -189,30 +202,8 @@ class Ball(pygame.sprite.Sprite):
             self.vy = -self.vy
 
 
-class Director:
-    def __init__(self) -> None:
-        pass
-
-    def action(self, initial_scene, fps=60):
-        pass
-
-
-class Scene:
-    def __init__(self) -> None:
-        self.next_scene = False
-        self.playing = True
-        pass
-
-    def event(self, e):
-        pass
-
-    def update(self):
-        pass
-
-    def draw(self, surface):
-        pass
-
-    def change_scene(self, new_scene):
+class Tone(pygame.mixer.Sound):
+    def __init__(self, freq, array_type, wave_type):
         pass
 
 
@@ -252,6 +243,7 @@ font = pygame.font.SysFont(None, 32)
 # Adjust event repetition
 pygame.key.set_repeat(30)
 
+
 start_game = False
 
 # Event loop
@@ -264,6 +256,10 @@ while True:
 
     if DRAW and pygame.key.get_pressed()[pygame.K_SPACE]:
         print("BOI")
+        if myBall.rect.centerx < SIZE[0]//2:
+            myBall.vx = myBall.speed
+        else:
+            myBall.vx = -myBall.speed
         DRAW = False
 
     DISPLAY_SURF.fill(BG)
